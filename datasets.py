@@ -13,6 +13,7 @@ from scipy.misc import imread, imresize
 class StaticRandomCrop(object):
     def __init__(self, image_size, crop_size):
         self.th, self.tw = crop_size
+        self.th, self.tw = int(self.th), int(self.tw)
         h, w = image_size
         self.h1 = random.randint(0, h - self.th)
         self.w1 = random.randint(0, w - self.tw)
@@ -23,9 +24,11 @@ class StaticRandomCrop(object):
 class StaticCenterCrop(object):
     def __init__(self, image_size, crop_size):
         self.th, self.tw = crop_size
+        self.th, self.tw = int(self.th), int(self.tw)
         self.h, self.w = image_size
     def __call__(self, img):
-        return img[(self.h-self.th)/2:(self.h+self.th)/2, (self.w-self.tw)/2:(self.w+self.tw)/2,:]
+        return img[(self.h-self.th)//2:(self.h+self.th)//2,
+                (self.w-self.tw)//2:(self.w+self.tw)//2,:]
 
 class MpiSintel(data.Dataset):
     def __init__(self, args, is_cropped = False, root = '', dstype = 'clean', replicates = 1):
@@ -66,8 +69,8 @@ class MpiSintel(data.Dataset):
         self.frame_size = frame_utils.read_gen(self.image_list[0][0]).shape
 
         if (self.render_size[0] < 0) or (self.render_size[1] < 0) or (self.frame_size[0]%64) or (self.frame_size[1]%64):
-            self.render_size[0] = ( (self.frame_size[0])/64 ) * 64
-            self.render_size[1] = ( (self.frame_size[1])/64 ) * 64
+            self.render_size[0] = ( (self.frame_size[0])//64 ) * 64
+            self.render_size[1] = ( (self.frame_size[1])//64 ) * 64
 
         args.inference_size = self.render_size
 
@@ -92,7 +95,7 @@ class MpiSintel(data.Dataset):
         images = map(cropper, images)
         flow = cropper(flow)
 
-        images = np.array(images).transpose(3,0,1,2)
+        images = np.array(list(images)).transpose(3,0,1,2)
         flow = flow.transpose(2,0,1)
 
         images = torch.from_numpy(images.astype(np.float32))
